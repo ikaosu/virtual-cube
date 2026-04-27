@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { checkAdmin } from "@/lib/admin-auth";
-import { getServerSupabase } from "@/lib/supabase";
+import { getAdminSupabase } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
 
@@ -17,7 +17,7 @@ export async function DELETE(
     return NextResponse.json({ error: "invalid id" }, { status: 400 });
   }
 
-  const supabase = getServerSupabase();
+  const supabase = getAdminSupabase();
   const { error } = await supabase.from("solves").delete().eq("id", numericId);
   if (error) {
     console.error("[admin/solves DELETE] supabase error", error);

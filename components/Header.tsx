@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AuthButton from "./AuthButton";
 
 const CUBE_COLORS = [
   "bg-red-500",
@@ -43,6 +44,7 @@ export default function Header() {
           >
             ランキング
           </Link>
+          <AuthButton />
         </div>
       </nav>
     </header>

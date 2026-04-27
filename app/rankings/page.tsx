@@ -1,11 +1,11 @@
 import RankingTable, { type RankingRow } from "@/components/RankingTable";
-import { getServerSupabase, type SolveRow } from "@/lib/supabase";
+import { getAdminSupabase, type SolveRow } from "@/lib/supabase-admin";
 
 export const dynamic = "force-dynamic";
 
 async function fetchRankings(): Promise<RankingRow[]> {
   try {
-    const supabase = getServerSupabase();
+    const supabase = getAdminSupabase();
     const { data, error } = await supabase
       .from("solves")
       .select("display_name, time_ms, move_count, created_at")

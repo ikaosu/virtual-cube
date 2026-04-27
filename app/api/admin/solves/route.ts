@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { checkAdmin } from "@/lib/admin-auth";
-import { getServerSupabase, type SolveRow } from "@/lib/supabase";
+import { getAdminSupabase, type SolveRow } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
 
@@ -8,7 +8,7 @@ export async function GET(req: Request) {
   const denied = checkAdmin(req);
   if (denied) return denied;
 
-  const supabase = getServerSupabase();
+  const supabase = getAdminSupabase();
   const { data, error } = await supabase
     .from("solves")
     .select("id, display_name, event, time_ms, scramble, solution, move_count, created_at")

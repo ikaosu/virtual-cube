@@ -1,24 +1,25 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-let _serverClient: SupabaseClient | null = null;
+let _adminClient: SupabaseClient | null = null;
 
 /**
- * Server-side Supabase client using the SERVICE_ROLE key.
- * Only call from server (route handlers / RSC) — never ship the key to the browser.
+ * Server-only Supabase client using the SERVICE_ROLE key.
+ * Bypasses RLS — use for trusted server operations (validation, admin).
+ * Never import this from a client component.
  */
-export function getServerSupabase(): SupabaseClient {
-  if (_serverClient) return _serverClient;
-  const url = process.env.SUPABASE_URL;
+export function getAdminSupabase(): SupabaseClient {
+  if (_adminClient) return _adminClient;
+  const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
     throw new Error(
       "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in env (set in .env.local)"
     );
   }
-  _serverClient = createClient(url, key, {
+  _adminClient = createClient(url, key, {
     auth: { persistSession: false },
   });
-  return _serverClient;
+  return _adminClient;
 }
 
 export interface SolveRow {
@@ -30,4 +31,5 @@ export interface SolveRow {
   solution: string;
   move_count: number;
   created_at: string;
+  user_id?: string | null;
 }

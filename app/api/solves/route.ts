@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { validateSolve } from "@/lib/validate-solve";
-import { getServerSupabase } from "@/lib/supabase";
+import { getAdminSupabase } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
 
@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: result.reason }, { status: result.status });
   }
 
-  const supabase = getServerSupabase();
+  const supabase = getAdminSupabase();
   const { data, error } = await supabase
     .from("solves")
     .insert({

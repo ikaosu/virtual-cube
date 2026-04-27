@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatTime } from "@/lib/format-time";
 import { computeStats } from "@/lib/stats";
-import { getServerSupabase, type SolveRow } from "@/lib/supabase";
+import { getAdminSupabase, type SolveRow } from "@/lib/supabase-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +12,7 @@ interface PageProps {
 
 async function fetchSolves(name: string): Promise<SolveRow[]> {
   try {
-    const supabase = getServerSupabase();
+    const supabase = getAdminSupabase();
     const { data, error } = await supabase
       .from("solves")
       .select("id, display_name, event, time_ms, scramble, solution, move_count, created_at")
