@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { KPattern } from "cubing/kpuzzle";
-import { get3x3KPuzzle, newScramble3x3 } from "./cube";
+import { newScramble3x3 } from "./cube";
 
 export type SolverState = "idle" | "ready" | "solving" | "done";
 
@@ -22,16 +21,13 @@ export interface SolverSession {
   lastResult: SolveResult | null;
   /** Generate a new scramble and arm the cube; transitions idle/done → ready. */
   newScramble(): Promise<void>;
-  /** Feed a move from the cube. Starts the timer on first move; ends it when solved. */
+  /** Feed a move from the cube. Starts the timer on first move. */
   recordMove(move: string): void;
+  /** Called by the cube when it reaches a solved state. Stops the timer. */
+  markSolved(): void;
   /** Discard current state and return to idle. */
   reset(): void;
 }
-
-const SOLVED_OPTIONS = {
-  ignorePuzzleOrientation: true,
-  ignoreCenterOrientation: true,
-};
 
 export function useSolverSession(): SolverSession {
   const [state, setState] = useState<SolverState>("idle");
@@ -41,7 +37,6 @@ export function useSolverSession(): SolverSession {
   const [lastResult, setLastResult] = useState<SolveResult | null>(null);
 
   const stateRef = useRef<SolverState>("idle");
-  const patternRef = useRef<KPattern | null>(null);
   const startedAtRef = useRef<number>(0);
   const scrambleRef = useRef<string | null>(null);
   const solutionRef = useRef<string[]>([]);
@@ -68,12 +63,7 @@ export function useSolverSession(): SolverSession {
   }, [state]);
 
   const newScramble = useCallback(async () => {
-    const [kpuzzle, scrambleStr] = await Promise.all([
-      get3x3KPuzzle(),
-      newScramble3x3(),
-    ]);
-    const scrambledPattern = kpuzzle.defaultPattern().applyAlg(scrambleStr);
-    patternRef.current = scrambledPattern;
+    const scrambleStr = await newScramble3x3();
     scrambleRef.current = scrambleStr;
     solutionRef.current = [];
     startedAtRef.current = 0;
@@ -86,39 +76,27 @@ export function useSolverSession(): SolverSession {
   const recordMove = useCallback((move: string) => {
     const current = stateRef.current;
     if (current !== "ready" && current !== "solving") return;
-    const pattern = patternRef.current;
-    if (!pattern) return;
-
-    let nextPattern: KPattern;
-    try {
-      nextPattern = pattern.applyMove(move);
-    } catch (err) {
-      console.error("[solver] applyMove failed for", move, err);
-      return;
-    }
-    patternRef.current = nextPattern;
     solutionRef.current = [...solutionRef.current, move];
     setSolution(solutionRef.current);
-
     if (current === "ready") {
       startedAtRef.current = performance.now();
       setState("solving");
     }
+  }, []);
 
-    if (nextPattern.experimentalIsSolved(SOLVED_OPTIONS)) {
-      const finalMs = performance.now() - startedAtRef.current;
-      setElapsedMs(finalMs);
-      setLastResult({
-        scramble: scrambleRef.current ?? "",
-        solution: solutionRef.current,
-        timeMs: Math.round(finalMs),
-      });
-      setState("done");
-    }
+  const markSolved = useCallback(() => {
+    if (stateRef.current !== "solving") return;
+    const finalMs = performance.now() - startedAtRef.current;
+    setElapsedMs(finalMs);
+    setLastResult({
+      scramble: scrambleRef.current ?? "",
+      solution: solutionRef.current,
+      timeMs: Math.round(finalMs),
+    });
+    setState("done");
   }, []);
 
   const reset = useCallback(() => {
-    patternRef.current = null;
     scrambleRef.current = null;
     solutionRef.current = [];
     startedAtRef.current = 0;
@@ -137,6 +115,7 @@ export function useSolverSession(): SolverSession {
     lastResult,
     newScramble,
     recordMove,
+    markSolved,
     reset,
   };
 }

@@ -18,6 +18,8 @@ export interface VirtualCubeHandle {
 interface VirtualCubeProps {
   /** Fired for each user-initiated move during the solve, in WCA notation ("R", "U'", "R2", etc.). */
   onMove?: (move: string) => void;
+  /** Fired when the cube reaches a solved state (orientation-invariant) after a user move. */
+  onSolved?: () => void;
   className?: string;
 }
 
@@ -56,6 +58,11 @@ function loadCstimerScripts(): Promise<void> {
   return scriptsLoadedPromise;
 }
 
+interface CstimerTwisty {
+  parseScramble(s: string): unknown[];
+  getFacelet(): string;
+}
+
 interface CstimerScene {
   initializeTwisty(opts: {
     type: string;
@@ -63,9 +70,7 @@ interface CstimerScene {
     allowDragging?: boolean;
   }): void;
   getDomElement(): HTMLElement;
-  getTwisty(): {
-    parseScramble(s: string): unknown[];
-  };
+  getTwisty(): CstimerTwisty;
   applyMoves(moves: unknown[]): void;
   addMoves(moves: unknown[]): void;
   addMoveListener(
@@ -80,15 +85,36 @@ interface CstimerScene {
   resize(): void;
 }
 
+/** Returns true iff every face of the 54-char facelet string is monochrome. */
+function isFaceletSolved(facelet: string): boolean {
+  if (facelet.length !== 54) return false;
+  for (let f = 0; f < 6; f++) {
+    const start = f * 9;
+    const c = facelet[start];
+    for (let i = 1; i < 9; i++) {
+      if (facelet[start + i] !== c) return false;
+    }
+  }
+  return true;
+}
+
 const VirtualCube = forwardRef<VirtualCubeHandle, VirtualCubeProps>(
-  function VirtualCube({ onMove, className }, ref) {
+  function VirtualCube({ onMove, onSolved, className }, ref) {
     const containerRef = useRef<HTMLDivElement>(null);
     const sceneRef = useRef<CstimerScene | null>(null);
     const onMoveRef = useRef(onMove);
+    const onSolvedRef = useRef(onSolved);
+    // Suppress onMove/onSolved while we're applying a scramble programmatically.
+    const suppressRef = useRef(false);
+    // Avoid firing onSolved repeatedly: require an unsolved state in between.
+    const wasSolvedRef = useRef(true);
 
     useEffect(() => {
       onMoveRef.current = onMove;
     }, [onMove]);
+    useEffect(() => {
+      onSolvedRef.current = onSolved;
+    }, [onSolved]);
 
     useEffect(() => {
       let cancelled = false;
@@ -124,11 +150,26 @@ const VirtualCube = forwardRef<VirtualCubeHandle, VirtualCubeProps>(
 
         scene.addMoveListener((move, step) => {
           if (step !== 0) return;
+          if (suppressRef.current) return;
           try {
             const moveStr = cstimerMoveToWca(move as CstimerMove);
             onMoveRef.current?.(moveStr);
           } catch (err) {
             console.error("[VirtualCube] move conversion failed", err, move);
+          }
+          // Check solved state directly from the visible cube.
+          try {
+            const twisty = scene.getTwisty();
+            const facelet = twisty.getFacelet();
+            const solvedNow = isFaceletSolved(facelet);
+            if (solvedNow && !wasSolvedRef.current) {
+              wasSolvedRef.current = true;
+              onSolvedRef.current?.();
+            } else if (!solvedNow) {
+              wasSolvedRef.current = false;
+            }
+          } catch (err) {
+            console.error("[VirtualCube] solve detection failed", err);
           }
         });
 
@@ -183,6 +224,7 @@ const VirtualCube = forwardRef<VirtualCubeHandle, VirtualCubeProps>(
             console.warn("[VirtualCube] applyScramble called before scene ready");
             return;
           }
+          suppressRef.current = true;
           try {
             scene.initializeTwisty({
               type: "cube",
@@ -195,13 +237,23 @@ const VirtualCube = forwardRef<VirtualCubeHandle, VirtualCubeProps>(
               const moves = scene.getTwisty().parseScramble(trimmed);
               scene.applyMoves(moves);
             }
+            // After scramble, the cube is (almost certainly) not solved.
+            // Reset the "wasSolved" gate so that returning to solved fires onSolved.
+            try {
+              wasSolvedRef.current = isFaceletSolved(scene.getTwisty().getFacelet());
+            } catch {
+              wasSolvedRef.current = false;
+            }
           } catch (err) {
             console.error("[VirtualCube] applyScramble failed", err);
+          } finally {
+            suppressRef.current = false;
           }
         },
         reset() {
           const scene = sceneRef.current;
           if (!scene) return;
+          suppressRef.current = true;
           try {
             scene.initializeTwisty({
               type: "cube",
@@ -209,8 +261,11 @@ const VirtualCube = forwardRef<VirtualCubeHandle, VirtualCubeProps>(
               allowDragging: false,
             });
             scene.resize();
+            wasSolvedRef.current = true;
           } catch (err) {
             console.error("[VirtualCube] reset failed", err);
+          } finally {
+            suppressRef.current = false;
           }
         },
       }),

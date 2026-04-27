@@ -1,5 +1,15 @@
 import { Alg } from "cubing/alg";
-import { get3x3KPuzzle } from "./cube";
+import type { KPuzzle } from "cubing/kpuzzle";
+
+let _kpuzzlePromise: Promise<KPuzzle> | null = null;
+
+/** Server-only 3x3x3 KPuzzle for solution verification. */
+function get3x3KPuzzle(): Promise<KPuzzle> {
+  if (!_kpuzzlePromise) {
+    _kpuzzlePromise = import("cubing/puzzles").then((m) => m.cube3x3x3.kpuzzle());
+  }
+  return _kpuzzlePromise;
+}
 
 export interface SolveSubmission {
   scramble: string;

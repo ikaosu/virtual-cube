@@ -50,7 +50,11 @@ export default function SolverPanel() {
       </div>
 
       <div className="w-full max-w-[400px] aspect-square bg-white rounded-3xl border border-gray-200 shadow-sm p-2">
-        <VirtualCube ref={cubeRef} onMove={session.recordMove} />
+        <VirtualCube
+          ref={cubeRef}
+          onMove={session.recordMove}
+          onSolved={session.markSolved}
+        />
       </div>
 
       <div className="flex flex-wrap gap-2 justify-center w-full max-w-[400px]">
