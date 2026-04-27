@@ -27,7 +27,6 @@ export default function SolverPanel() {
   const cubeRef = useRef<VirtualCubeHandle>(null);
   const session = useSolverSession();
 
-  // Auto-fetch the first scramble when the page loads.
   useEffect(() => {
     if (session.state === "idle") {
       session.newScramble();
@@ -41,16 +40,18 @@ export default function SolverPanel() {
   }, [session.state, session.scramble]);
 
   return (
-    <div className="flex flex-col items-center gap-4 w-full">
-      <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-5 w-full flex flex-col items-center gap-3">
+    <div className="flex flex-col items-center gap-2 w-full">
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-4 py-3 w-full flex flex-col items-center gap-1">
         <ScrambleDisplay scramble={session.scramble} />
         <Timer ms={session.elapsedMs} active={session.state === "solving"} />
-        <div className={`text-sm font-medium min-h-[1.5em] ${STATUS_COLOR[session.state]}`}>
+        <div
+          className={`text-xs font-medium min-h-[1em] ${STATUS_COLOR[session.state]}`}
+        >
           {STATUS_LABEL[session.state]}
         </div>
       </div>
 
-      <div className="w-full max-w-[400px] aspect-square bg-white rounded-3xl border border-gray-200 shadow-sm p-2">
+      <div className="w-full max-w-[340px] aspect-square bg-white rounded-2xl border border-gray-200 shadow-sm p-1.5">
         <VirtualCube
           ref={cubeRef}
           onMove={session.recordMove}
@@ -58,16 +59,16 @@ export default function SolverPanel() {
         />
       </div>
 
-      <div className="flex flex-wrap gap-2 justify-center w-full max-w-[400px]">
+      <div className="flex gap-2 justify-center w-full max-w-[340px]">
         <button
-          className="flex-1 py-3 bg-gradient-to-r from-indigo-600 to-blue-500 hover:from-indigo-700 hover:to-blue-600 text-white font-bold rounded-2xl shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 py-2 bg-gradient-to-r from-indigo-600 to-blue-500 hover:from-indigo-700 hover:to-blue-600 text-white text-sm font-bold rounded-xl shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={() => session.newScramble()}
           disabled={session.state === "solving"}
         >
           次のスクランブル
         </button>
         <button
-          className="px-4 py-3 bg-white border-2 border-gray-300 hover:border-indigo-400 text-gray-700 font-bold rounded-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3 py-2 bg-white border-2 border-gray-300 hover:border-indigo-400 text-gray-700 text-sm font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={() => {
             session.reset();
             cubeRef.current?.reset();
@@ -78,11 +79,11 @@ export default function SolverPanel() {
         </button>
       </div>
 
-      <details className="text-xs w-full max-w-[400px]">
+      <details className="text-xs w-full max-w-[340px]">
         <summary className="cursor-pointer text-gray-500 hover:text-gray-700">
           手数 / ソリューション ({countSolutionMoves(session.solution)} 手, 持ち替え除く)
         </summary>
-        <div className="font-mono break-words mt-2 text-gray-800 bg-slate-100 p-3 rounded-2xl">
+        <div className="font-mono break-words mt-2 text-gray-800 bg-slate-100 p-3 rounded-xl">
           {session.solution.join(" ")}
         </div>
       </details>
