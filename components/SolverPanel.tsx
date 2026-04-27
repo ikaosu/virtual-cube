@@ -5,6 +5,7 @@ import VirtualCube, { type VirtualCubeHandle } from "./VirtualCube";
 import Timer from "./Timer";
 import ScrambleDisplay from "./ScrambleDisplay";
 import KeyMapHelp from "./KeyMapHelp";
+import MobileKeypad from "./MobileKeypad";
 import SubmitForm from "./SubmitForm";
 import { useSolverSession } from "@/lib/use-solver-session";
 import { countSolutionMoves } from "@/lib/moves";
@@ -78,6 +79,11 @@ export default function SolverPanel() {
           Reset
         </button>
       </div>
+
+      <MobileKeypad
+        onMove={(m) => cubeRef.current?.executeMove(m)}
+        disabled={session.state === "done" || session.state === "idle"}
+      />
 
       <details className="text-xs w-full max-w-[340px]">
         <summary className="cursor-pointer text-gray-500 hover:text-gray-700">

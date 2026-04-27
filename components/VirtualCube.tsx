@@ -6,13 +6,15 @@ import {
   useImperativeHandle,
   useRef,
 } from "react";
-import { cstimerMoveToWca, type CstimerMove } from "@/lib/cstimer-move";
+import { cstimerMoveToWca, wcaToCstimerMove, type CstimerMove } from "@/lib/cstimer-move";
 
 export interface VirtualCubeHandle {
   /** Reset cube to solved, then apply the given scramble instantly. */
   applyScramble(scramble: string): void;
   /** Reset cube to solved state. */
   reset(): void;
+  /** Apply a single move (WCA notation). Triggers onMove + onSolved as if from a keypress. */
+  executeMove(wca: string): void;
 }
 
 interface VirtualCubeProps {
@@ -286,6 +288,20 @@ const VirtualCube = forwardRef<VirtualCubeHandle, VirtualCubeProps>(
             console.error("[VirtualCube] reset failed", err);
           } finally {
             suppressRef.current = false;
+          }
+        },
+        executeMove(wca: string) {
+          const scene = sceneRef.current;
+          if (!scene) return;
+          const internal = wcaToCstimerMove(wca);
+          if (!internal) {
+            console.warn("[VirtualCube] unknown move", wca);
+            return;
+          }
+          try {
+            scene.addMoves([internal]);
+          } catch (err) {
+            console.error("[VirtualCube] executeMove failed", err);
           }
         },
       }),

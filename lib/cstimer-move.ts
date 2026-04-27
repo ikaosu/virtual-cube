@@ -48,3 +48,31 @@ function powerSuffix(sign: number, absPower: number): string {
   if (absPower === 2) return "2";
   return sign < 0 ? "'" : "";
 }
+
+/**
+ * Inverse of cstimerMoveToWca: parse WCA notation into cstimer's internal
+ * `[start, end, axis, power]` array. Specialised for 3x3 (dimension=3,
+ * oSl=oSr=1).
+ */
+export function wcaToCstimerMove(wca: string): CstimerMove | null {
+  const m = /^([xyzMESRLUDFB])(w?)(2|')?$/.exec(wca);
+  if (!m) return null;
+  const head = m[1];
+  const wide = m[2] === "w";
+  const suffix = m[3];
+  const power = suffix === "'" ? -1 : suffix === "2" ? 2 : 1;
+
+  if (head === "x") return [1, 3, "R", power];
+  if (head === "y") return [1, 3, "U", power];
+  if (head === "z") return [1, 3, "F", power];
+
+  if (head === "M") return [2, 2, "L", power];
+  if (head === "E") return [2, 2, "D", power];
+  if (head === "S") return [2, 2, "F", power];
+
+  if ("RLUDFB".includes(head)) {
+    if (wide) return [1, 2, head, power];
+    return [1, 1, head, power];
+  }
+  return null;
+}
