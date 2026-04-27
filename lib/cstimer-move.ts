@@ -31,7 +31,11 @@ export function cstimerMoveToWca(move: CstimerMove): string {
   }
 
   if (start === 2 && end === 2) {
-    const inverted = "RUF".includes(axis) ? -1 : 1;
+    // Slice convention: M follows L direction, E follows D, S follows F.
+    // So R / U / B (the opposites) need their power sign inverted.
+    // (This is the OPPOSITE of cube rotations, where U/R/F are positive
+    // because y/x/z follow those axes — easy to mix the two up.)
+    const inverted = "RUB".includes(axis) ? -1 : 1;
     const realSign = sign * inverted;
     const mes = axis === "L" || axis === "R" ? "M" : axis === "U" || axis === "D" ? "E" : "S";
     return mes + powerSuffix(realSign, absPower);
