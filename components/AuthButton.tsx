@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
@@ -12,7 +11,6 @@ export default function AuthButton() {
   );
   const [user, setUser] = useState<User | null>(null);
   const [busy, setBusy] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!supabase) return;
@@ -29,7 +27,6 @@ export default function AuthButton() {
     };
   }, [supabase]);
 
-  // Auth not configured (env vars missing): hide the button entirely.
   if (!supabase) return null;
 
   const signIn = async () => {
@@ -49,7 +46,6 @@ export default function AuthButton() {
     setBusy(true);
     await supabase.auth.signOut();
     setBusy(false);
-    setMenuOpen(false);
   };
 
   if (!user) {
@@ -70,32 +66,15 @@ export default function AuthButton() {
     "ユーザー";
 
   return (
-    <div className="relative">
+    <div className="flex items-center gap-3 text-sm">
+      <span className="font-medium max-w-[8em] truncate">{display}</span>
       <button
-        onClick={() => setMenuOpen((v) => !v)}
-        className="text-sm font-medium hover:text-cyan-100 transition-colors flex items-center gap-1"
+        onClick={signOut}
+        disabled={busy}
+        className="text-xs font-medium hover:text-cyan-100 transition-colors disabled:opacity-50"
       >
-        <span className="max-w-[8em] truncate">{display}</span>
-        <span className="text-xs">▾</span>
+        ログアウト
       </button>
-      {menuOpen && (
-        <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-gray-200 py-1 min-w-[10em] text-gray-800 z-10">
-          <Link
-            href="/profile"
-            className="block px-3 py-2 text-sm hover:bg-indigo-50"
-            onClick={() => setMenuOpen(false)}
-          >
-            マイページ
-          </Link>
-          <button
-            onClick={signOut}
-            disabled={busy}
-            className="block w-full text-left px-3 py-2 text-sm hover:bg-indigo-50 disabled:opacity-50"
-          >
-            ログアウト
-          </button>
-        </div>
-      )}
     </div>
   );
 }
