@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { formatTime } from "@/lib/format-time";
+import { countSolutionMoves } from "@/lib/moves";
 import type { SolveResult } from "@/lib/use-solver-session";
 
 interface SubmitFormProps {
@@ -65,7 +66,7 @@ export default function SubmitForm({ result, onSubmitted }: SubmitFormProps) {
         <div className="text-sm text-gray-500">
           <span className="font-mono font-bold">{formatTime(result.timeMs)}</span>
           {" 秒 / "}
-          {result.solution.length} 手
+          {countSolutionMoves(result.solution)} 手
         </div>
       </div>
     );
@@ -79,7 +80,7 @@ export default function SubmitForm({ result, onSubmitted }: SubmitFormProps) {
           {formatTime(result.timeMs)}
         </span>
         <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full ml-2">
-          {result.solution.length} 手
+          {countSolutionMoves(result.solution)} 手
         </span>
       </div>
       <label className="flex flex-col gap-1 text-sm">

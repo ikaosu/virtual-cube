@@ -7,6 +7,7 @@ import ScrambleDisplay from "./ScrambleDisplay";
 import KeyMapHelp from "./KeyMapHelp";
 import SubmitForm from "./SubmitForm";
 import { useSolverSession } from "@/lib/use-solver-session";
+import { countSolutionMoves } from "@/lib/moves";
 
 const STATUS_LABEL: Record<"idle" | "ready" | "solving" | "done", string> = {
   idle: "スクランブルを取得中…",
@@ -79,7 +80,7 @@ export default function SolverPanel() {
 
       <details className="text-xs w-full max-w-[400px]">
         <summary className="cursor-pointer text-gray-500 hover:text-gray-700">
-          手数 / ソリューション ({session.solution.length})
+          手数 / ソリューション ({countSolutionMoves(session.solution)} 手, 持ち替え除く)
         </summary>
         <div className="font-mono break-words mt-2 text-gray-800 bg-slate-100 p-3 rounded-2xl">
           {session.solution.join(" ")}

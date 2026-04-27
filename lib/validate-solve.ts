@@ -1,5 +1,6 @@
 import { Alg } from "cubing/alg";
 import type { KPuzzle } from "cubing/kpuzzle";
+import { countSolutionMoves } from "./moves";
 
 let _kpuzzlePromise: Promise<KPuzzle> | null = null;
 
@@ -100,7 +101,8 @@ export async function validateSolve(input: unknown): Promise<ValidationResult> {
     ok: true,
     scramble,
     solutionStr: solution.join(" "),
-    moveCount: solution.length,
+    // Excludes cube rotations (x/y/z), since they don't change cube state.
+    moveCount: countSolutionMoves(solution),
     timeMs: Math.round(timeMs),
     displayName: trimmedName,
   };
