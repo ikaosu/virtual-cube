@@ -82,8 +82,16 @@ function StatGroup({
 }
 
 export default async function ProfilePage({ params }: PageProps) {
-  const { name } = await params;
-  if (!name) notFound();
+  const { name: rawName } = await params;
+  if (!rawName) notFound();
+  // Defensive: some hosting paths deliver the param still URL-encoded.
+  // decodeURIComponent is a no-op on already-decoded UTF-8 input.
+  let name: string;
+  try {
+    name = decodeURIComponent(rawName);
+  } catch {
+    name = rawName;
+  }
 
   const solves = await fetchSolves(name);
   const times = solves.map((s) => s.time_ms);
