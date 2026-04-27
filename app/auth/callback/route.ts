@@ -10,8 +10,8 @@ export async function GET(req: Request) {
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/";
 
-  if (code) {
-    const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
+  if (supabase && code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`);

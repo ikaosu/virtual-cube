@@ -1,17 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import type { User } from "@supabase/supabase-js";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 export default function AuthButton() {
-  const [supabase] = useState(() => createSupabaseBrowserClient());
+  const supabase: SupabaseClient | null = useMemo(
+    () => createSupabaseBrowserClient(),
+    []
+  );
   const [user, setUser] = useState<User | null>(null);
   const [busy, setBusy] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
+    if (!supabase) return;
     let active = true;
     supabase.auth.getUser().then(({ data }) => {
       if (active) setUser(data.user);
@@ -24,6 +28,9 @@ export default function AuthButton() {
       sub.subscription.unsubscribe();
     };
   }, [supabase]);
+
+  // Auth not configured (env vars missing): hide the button entirely.
+  if (!supabase) return null;
 
   const signIn = async () => {
     setBusy(true);

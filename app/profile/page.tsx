@@ -6,6 +6,14 @@ export const dynamic = "force-dynamic";
 
 export default async function MyProfilePage() {
   const supabase = await createSupabaseServerClient();
+  if (!supabase) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-12 text-center text-gray-500">
+        認証が未設定です (NEXT_PUBLIC_SUPABASE_URL / _ANON_KEY)。
+      </div>
+    );
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
