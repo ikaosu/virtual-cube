@@ -108,6 +108,9 @@ const VirtualCube = forwardRef<VirtualCubeHandle, VirtualCubeProps>(
     const suppressRef = useRef(false);
     // Avoid firing onSolved repeatedly: require an unsolved state in between.
     const wasSolvedRef = useRef(true);
+    // If applyScramble is called before the cstimer scene finishes loading,
+    // queue the scramble here and apply it once the scene is ready.
+    const pendingScrambleRef = useRef<string | null>(null);
 
     useEffect(() => {
       onMoveRef.current = onMove;
@@ -209,6 +212,13 @@ const VirtualCube = forwardRef<VirtualCubeHandle, VirtualCubeProps>(
         resizeObserver.observe(containerRef.current);
 
         sceneRef.current = scene;
+
+        // If a scramble was requested before the scene was ready, apply it now.
+        if (pendingScrambleRef.current !== null) {
+          const queued = pendingScrambleRef.current;
+          pendingScrambleRef.current = null;
+          applyScrambleToScene(scene, queued);
+        }
       })();
 
       return () => {
@@ -218,44 +228,51 @@ const VirtualCube = forwardRef<VirtualCubeHandle, VirtualCubeProps>(
       };
     }, []);
 
+    function applyScrambleToScene(scene: CstimerScene, scramble: string) {
+      suppressRef.current = true;
+      try {
+        scene.initializeTwisty({
+          type: "cube",
+          dimension: 3,
+          allowDragging: false,
+        });
+        scene.resize();
+        const trimmed = scramble.trim();
+        if (trimmed.length > 0) {
+          const moves = scene.getTwisty().parseScramble(trimmed);
+          scene.applyMoves(moves);
+        }
+        try {
+          wasSolvedRef.current = isFaceletSolved(scene.getTwisty().getFacelet());
+        } catch {
+          wasSolvedRef.current = false;
+        }
+      } catch (err) {
+        console.error("[VirtualCube] applyScramble failed", err);
+      } finally {
+        suppressRef.current = false;
+      }
+    }
+
     useImperativeHandle(
       ref,
       () => ({
         applyScramble(scramble: string) {
           const scene = sceneRef.current;
           if (!scene) {
-            console.warn("[VirtualCube] applyScramble called before scene ready");
+            // Scene not initialised yet; remember the request and apply it
+            // once the scripts finish loading.
+            pendingScrambleRef.current = scramble;
             return;
           }
-          suppressRef.current = true;
-          try {
-            scene.initializeTwisty({
-              type: "cube",
-              dimension: 3,
-              allowDragging: false,
-            });
-            scene.resize();
-            const trimmed = scramble.trim();
-            if (trimmed.length > 0) {
-              const moves = scene.getTwisty().parseScramble(trimmed);
-              scene.applyMoves(moves);
-            }
-            // After scramble, the cube is (almost certainly) not solved.
-            // Reset the "wasSolved" gate so that returning to solved fires onSolved.
-            try {
-              wasSolvedRef.current = isFaceletSolved(scene.getTwisty().getFacelet());
-            } catch {
-              wasSolvedRef.current = false;
-            }
-          } catch (err) {
-            console.error("[VirtualCube] applyScramble failed", err);
-          } finally {
-            suppressRef.current = false;
-          }
+          applyScrambleToScene(scene, scramble);
         },
         reset() {
           const scene = sceneRef.current;
-          if (!scene) return;
+          if (!scene) {
+            pendingScrambleRef.current = "";
+            return;
+          }
           suppressRef.current = true;
           try {
             scene.initializeTwisty({
