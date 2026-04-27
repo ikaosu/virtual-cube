@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { formatTime } from "@/lib/format-time";
 
 export interface RankingRow {
@@ -53,8 +54,13 @@ export default function RankingTable({ rows }: RankingTableProps) {
                 {row.rank}
               </span>
             </td>
-            <td className="text-left px-3 py-3 truncate max-w-[12em] text-gray-800">
-              {row.display_name}
+            <td className="text-left px-3 py-3 truncate max-w-[12em]">
+              <Link
+                href={`/u/${encodeURIComponent(row.display_name)}`}
+                className="text-gray-800 hover:text-indigo-600 hover:underline"
+              >
+                {row.display_name}
+              </Link>
             </td>
             <td className="text-right px-3 py-3 font-mono font-bold tabular-nums text-gray-900">
               {formatTime(row.time_ms)}

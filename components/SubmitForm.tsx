@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { formatTime } from "@/lib/format-time";
 import { countSolutionMoves } from "@/lib/moves";
@@ -60,14 +61,25 @@ export default function SubmitForm({ result, onSubmitted }: SubmitFormProps) {
   };
 
   if (state.kind === "ok") {
+    const trimmedName = name.trim();
     return (
-      <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-6 w-full max-w-[400px] text-center">
-        <div className="text-lg font-bold text-cyan-600 mb-1">登録しました</div>
-        <div className="text-sm text-gray-500">
-          <span className="font-mono font-bold">{formatTime(result.timeMs)}</span>
-          {" 秒 / "}
-          {countSolutionMoves(result.solution)} 手
+      <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-6 w-full max-w-[400px] text-center flex flex-col gap-3">
+        <div>
+          <div className="text-lg font-bold text-cyan-600 mb-1">登録しました</div>
+          <div className="text-sm text-gray-500">
+            <span className="font-mono font-bold">{formatTime(result.timeMs)}</span>
+            {" 秒 / "}
+            {countSolutionMoves(result.solution)} 手
+          </div>
         </div>
+        {trimmedName.length > 0 && (
+          <Link
+            href={`/u/${encodeURIComponent(trimmedName)}`}
+            className="text-sm text-indigo-600 hover:underline"
+          >
+            自分のプロフィールを見る →
+          </Link>
+        )}
       </div>
     );
   }
