@@ -149,7 +149,11 @@ const VirtualCube = forwardRef<VirtualCubeHandle, VirtualCubeProps>(
         scene.resize();
 
         scene.addMoveListener((move, step) => {
-          if (step !== 0) return;
+          // Step 0 = move queued, step 1 = animation start, step 2 = move
+          // applied. We need step 2 for both onMove and solve detection
+          // because the cube's internal state isn't updated until then —
+          // reading getFacelet() at step 0 returns the previous state.
+          if (step !== 2) return;
           if (suppressRef.current) return;
           try {
             const moveStr = cstimerMoveToWca(move as CstimerMove);
@@ -157,7 +161,6 @@ const VirtualCube = forwardRef<VirtualCubeHandle, VirtualCubeProps>(
           } catch (err) {
             console.error("[VirtualCube] move conversion failed", err, move);
           }
-          // Check solved state directly from the visible cube.
           try {
             const twisty = scene.getTwisty();
             const facelet = twisty.getFacelet();
