@@ -12,9 +12,9 @@ import { countSolutionMoves } from "@/lib/moves";
 
 const STATUS_LABEL: Record<"idle" | "ready" | "solving" | "done", string> = {
   idle: "スクランブルを取得中…",
-  ready: "準備完了 — 最初の手でタイマー開始",
+  ready: "準備完了 — 最初の手でタイマー開始 (持ち替えはOK)",
   solving: "ソルブ中…",
-  done: "完成!",
+  done: "完成! スペースキーで次のスクランブル",
 };
 
 const STATUS_COLOR: Record<"idle" | "ready" | "solving" | "done", string> = {
@@ -40,6 +40,27 @@ export default function SolverPanel() {
     }
   }, [session.state, session.scramble]);
 
+  // Press space after a completed solve to fetch the next scramble.
+  useEffect(() => {
+    if (session.state !== "done") return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== "Space" && e.key !== " ") return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      e.preventDefault();
+      void session.newScramble();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [session.state, session.newScramble]);
+
   return (
     <div className="flex flex-col items-center gap-2 w-full">
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-4 py-3 w-full flex flex-col items-center gap-1">
@@ -57,6 +78,7 @@ export default function SolverPanel() {
           ref={cubeRef}
           onMove={session.recordMove}
           onSolved={session.markSolved}
+          enabled={session.state === "ready" || session.state === "solving"}
         />
       </div>
 
@@ -82,7 +104,7 @@ export default function SolverPanel() {
 
       <MobileKeypad
         onMove={(m) => cubeRef.current?.executeMove(m)}
-        disabled={session.state === "done" || session.state === "idle"}
+        disabled={session.state !== "ready" && session.state !== "solving"}
       />
 
       <details className="text-xs w-full max-w-[340px]">

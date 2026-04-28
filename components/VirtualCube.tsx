@@ -22,6 +22,8 @@ interface VirtualCubeProps {
   onMove?: (move: string) => void;
   /** Fired when the cube reaches a solved state (orientation-invariant) after a user move. */
   onSolved?: () => void;
+  /** When false, ignore keyboard input (e.g. while showing the solve result and waiting for next scramble). */
+  enabled?: boolean;
   className?: string;
 }
 
@@ -101,11 +103,12 @@ function isFaceletSolved(facelet: string): boolean {
 }
 
 const VirtualCube = forwardRef<VirtualCubeHandle, VirtualCubeProps>(
-  function VirtualCube({ onMove, onSolved, className }, ref) {
+  function VirtualCube({ onMove, onSolved, enabled = true, className }, ref) {
     const containerRef = useRef<HTMLDivElement>(null);
     const sceneRef = useRef<CstimerScene | null>(null);
     const onMoveRef = useRef(onMove);
     const onSolvedRef = useRef(onSolved);
+    const enabledRef = useRef(enabled);
     // Suppress onMove/onSolved while we're applying a scramble programmatically.
     const suppressRef = useRef(false);
     // Avoid firing onSolved repeatedly: require an unsolved state in between.
@@ -120,6 +123,9 @@ const VirtualCube = forwardRef<VirtualCubeHandle, VirtualCubeProps>(
     useEffect(() => {
       onSolvedRef.current = onSolved;
     }, [onSolved]);
+    useEffect(() => {
+      enabledRef.current = enabled;
+    }, [enabled]);
 
     useEffect(() => {
       let cancelled = false;
@@ -182,6 +188,7 @@ const VirtualCube = forwardRef<VirtualCubeHandle, VirtualCubeProps>(
         });
 
         onKey = (e: KeyboardEvent) => {
+          if (!enabledRef.current) return;
           const target = e.target as HTMLElement | null;
           if (
             target &&

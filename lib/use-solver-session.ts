@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { newScramble3x3 } from "./cube";
+import { isRotation } from "./moves";
 
 export type SolverState = "idle" | "ready" | "solving" | "done";
 
@@ -76,6 +77,9 @@ export function useSolverSession(): SolverSession {
   const recordMove = useCallback((move: string) => {
     const current = stateRef.current;
     if (current !== "ready" && current !== "solving") return;
+    // In "ready" state, cube rotations (x/y/z) are pre-solve grip changes —
+    // don't start the timer or count them toward the solution.
+    if (current === "ready" && isRotation(move)) return;
     solutionRef.current = [...solutionRef.current, move];
     setSolution(solutionRef.current);
     if (current === "ready") {
